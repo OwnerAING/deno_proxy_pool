@@ -3,18 +3,21 @@ import requests
 
 app = Flask(__name__)
 
+# 捕获所有路径
 @app.route('/', defaults={'path': ''}, methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH'])
 @app.route('/<path:path>', methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH'])
 def proxy(path):
     target_url = request.headers.get('Target-Url')
+    
+    # 【排错专用】如果你在浏览器直接打开 https://pai.yingziai.cn，会走到这里
     if not target_url:
-        return "Missing Target-Url header", 400
+        return "Proxy is running! 代理服务运行正常，请通过代码携带 Target-Url 请求。", 200
 
-    # 清洗掉 Vercel 自身的 Header，伪装成直接请求
+    # 清洗掉 Vercel 自身的 Header，保留其他 Header
     headers = {k: v for k, v in request.headers.items() if k.lower() not in ['host', 'target-url']}
 
     try:
-        # Vercel 免费版最大超时 10s，我们设为 9s 防止 Vercel 抛出丑陋的 504 页面
+        # Vercel 免费版最大超时是 10 秒，设为 9 秒防止 Vercel 抛出 504 页面
         resp = requests.request(
             method=request.method,
             url=target_url,
@@ -34,3 +37,7 @@ def proxy(path):
         return "Proxy Timeout", 504
     except Exception as e:
         return str(e), 500
+
+# 本地调试用
+if __name__ == '__main__':
+    app.run(port=8080)
