@@ -1,8 +1,5 @@
 {
-  "functions": {
-    "api/proxy.py": {
-      "memory": 128,
-      "maxDuration": 10
-    }
-  }
+  "rewrites": [
+    { "source": "/", "destination": "/api/proxy" }
+  ]
 }
