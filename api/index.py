@@ -8,12 +8,23 @@ app = Flask(__name__)
 def proxy(path):
     target_url = request.headers.get('Target-Url')
     
-    # 浏览器直接访问的提示
     if not target_url:
-        return "Proxy is running! 代理部署成功！请在代码中携带 Target-Url 请求。", 200
+        return "Proxy is running! 代理部署成功！", 200
 
-    # 清除 Vercel 附加的请求头
-    headers = {k: v for k, v in request.headers.items() if k.lower() not in ['host', 'target-url']}
+    # 【核心修改】在这里无情地过滤掉所有会出卖你真实 IP 的 Header 
+    drop_headers = {
+        'host', 
+        'target-url', 
+        'x-forwarded-for', 
+        'x-real-ip', 
+        'x-vercel-forwarded-for', 
+        'x-vercel-proxied-for',
+        'forwarded',
+        'client-ip'
+    }
+    
+    # 重新构建 Header，不带任何你的个人痕迹
+    headers = {k: v for k, v in request.headers.items() if k.lower() not in drop_headers}
 
     try:
         resp = requests.request(
